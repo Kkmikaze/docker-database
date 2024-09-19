@@ -3,9 +3,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 512M
+          cpus: '2'
+          memory: 4G
     image: postgres:10-alpine
+    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -22,6 +23,7 @@ services:
           cpus: '2'
           memory: 4G
     image: mysql:8.0
+    container_name: mysql
     ports:
       - "3306:3306"
     command:
@@ -40,14 +42,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 4G
+          cpus: '4'
+          memory: 8G
     network_mode: host
     image: adminer
+    container_name: adminer
     restart: always
     depends_on:
       - postgres
       - mysql
+      - mongo
     environment:
       ADMINER_DESIGN: dracula
       ADMINER_PLUGINS: 'tables-filter tinymce json-column struct-comments table-structure table-indexes-structure frames'
@@ -58,15 +62,32 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '1'
           memory: 512M
     image: redis:6.2-alpine
+    container_name: redis
     restart: always
     ports:
       - '6379:6379'
     command: redis-server --save 20 1 --loglevel warning --requirepass password
     volumes:
       - ./data/redis:/data
+  mongo:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    image: mongo:latest
+    restart: always
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./data/mongo:/data/db
 
 volumes:
   mysql:
@@ -74,4 +95,6 @@ volumes:
   postgres:
     driver: local
   redis:
+    driver: local
+  mongo:
     driver: local
